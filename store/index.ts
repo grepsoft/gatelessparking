@@ -4,7 +4,7 @@ import { create } from "zustand"
 
 export type SpotType = {
     address?: string,
-    gpscooords?: LatLng,
+    gpscoords?: LatLng,
     numberofspots?: number,
     price?: {
         hourly: number
@@ -20,7 +20,7 @@ export interface SpotState {
 export const useMySpotStore = create<SpotState>()((set) => ({
     data: {
         address: '',
-        gpscooords: {
+        gpscoords: {
             lat: 0,
             lng: 0
         },
@@ -37,7 +37,7 @@ export const useMySpotStore = create<SpotState>()((set) => ({
     restart: () => set({
         data: {
             address: '',
-            gpscooords: {
+            gpscoords: {
                 lat: 0,
                 lng: 0
             },

@@ -59,3 +59,38 @@
       @apply bg-background text-foreground;
     }
   }
+
+  .map_infocard_content {
+    padding: 0px
+  }
+  .map_infocard_title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    padding: 4px;
+  }
+
+  .map_infocard_body {
+    display: flex;
+    flex-direction: column;
+    row-gap: 4px;
+  }
+
+  .map_pin_container {
+    position: relative;
+  }
+
+  .map_pin_id {
+    position: absolute;
+    right: -4px;
+    z-index: -1;
+  }
+
+  .map_pin_id>span {
+    color: rgb(255, 255, 255);
+    font-size: 1rem;
+    font-weight: bold;
+    background: rgb(0, 0, 0);
+    padding: 4px 8px;
+    border-radius: 50%;
+
+  }

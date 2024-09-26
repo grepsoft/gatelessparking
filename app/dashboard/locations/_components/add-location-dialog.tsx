@@ -16,6 +16,7 @@ import SpotAddress from './spot-address'
 import NumberOfSpots from './number-of-spots'
 import Pricing from './pricing'
 import Summary from './summary'
+import { toast } from 'sonner'
 
 const totalSteps = 4
 const stepIncrement = 100/totalSteps
@@ -52,9 +53,29 @@ function AddLocationDialog({id=null,open,setOpen}:Props) {
         mySpotStore.restart()
     }
 
-    const handleFinalSubmit = () => {
+    const handleFinalSubmit = async () => {
         // save the data in the db
+        setSubmitting(true)
+
+        const data = new FormData()
         console.log(mySpotStore.data)
+        data.set('data', JSON.stringify(
+            mySpotStore.data
+        ))
+
+        const result = await fetch('/api/parkinglocation/new', {
+            method: 'POST',
+            body: data
+        })
+        setSubmitting(false)
+
+        if (result.ok) {
+            toast.success("Record created")
+            router.refresh()
+        } else {
+            // show error
+            toast.error("failed to create the parking location")
+        }
     }
 
     const handleNextStepChange = () => {

@@ -22,7 +22,7 @@ function SpotAddress({ onNext }: ListSpotPropsType) {
         setMessage('')
         mySpotStore.updateState({
             address: address,
-            gpscooords: gpscoords
+            gpscoords: gpscoords
         })
     }
   return (
