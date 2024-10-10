@@ -9,6 +9,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MenuIcon } from 'lucide-react'
+import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/nextjs'
 
 function Banners() {
     return (
@@ -44,8 +45,12 @@ function Banners() {
                     <div className="hidden sm:flex gap-x-4 items-center">
                         <Link href='/mybookings'>My bookings</Link>
                         <Link href='/dashboard'>Admin</Link>
-                        Signout
-                        Signin
+                        <SignedOut>
+                            <SignInButton />
+                        </SignedOut>
+                        <SignedIn>
+                            <UserButton />
+                        </SignedIn>
                     </div>
                 </div>
             </div>

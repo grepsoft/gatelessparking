@@ -43,3 +43,16 @@ export type MapParams = {
     status?: string,
     radius?: number
 }
+
+export enum BookingStatus {
+    CANCELLED = 'CANCELLED',
+    BOOKED = 'BOOKED',
+    PENDING = 'PENDING_PAYMENT'
+}
+
+export type ActionResponse = {
+    code: number,
+    message: string,
+    data?: any,
+    error?: any
+}
