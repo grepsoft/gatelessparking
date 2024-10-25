@@ -2,6 +2,7 @@
 
 import EmailTemplate from "@/components/email-template"
 import { SearchParams } from "@/components/search-component"
+import ViolationEmailTemplate from "@/components/violation-email-template"
 import { connectToDB } from "@/lib/db"
 import { Booking, BookingModel } from "@/schemas/booking"
 import { ParkingLocation, ParkingLocationModel } from "@/schemas/parking-locations"
@@ -53,15 +54,15 @@ export async function updateLocation({ id, path, location }: {
 
     try {
         await connectToDB()
-        
+
         const result = await ParkingLocationModel.updateOne({
             _id: id
         }, {
             $set: location
         })
-        
+
         revalidatePath(path)
-    } catch(error) {
+    } catch (error) {
         console.log(error)
         throw error
     }
@@ -80,37 +81,39 @@ export async function findNearbyLocations(maxDistance: number, searchParams: Sea
         const parkingLocations: ParkingLocation[] = await ParkingLocationModel.find({
             location: {
                 $nearSphere: {
-                    $geometry: { type: 'Point', 
-                        coordinates: [searchParams.gpscoords.lng, searchParams.gpscoords.lat]},
-                        $maxDistance: maxDistance // meters
+                    $geometry: {
+                        type: 'Point',
+                        coordinates: [searchParams.gpscoords.lng, searchParams.gpscoords.lat]
+                    },
+                    $maxDistance: maxDistance // meters
                 }
             }
         }).lean()
 
         // go through all locations and find the bookings for it
-        const availableLocations = 
-        await Promise.all(parkingLocations.map(async (location: ParkingLocation) => {
+        const availableLocations =
+            await Promise.all(parkingLocations.map(async (location: ParkingLocation) => {
 
-            const bookings = await BookingModel.find({
-                locationid: location._id,
-                status: BookingStatus.BOOKED,
-                starttime: {
-                    $lt: et
-                },
-                endtime: {
-                    $gt: st
-                }
-            }).lean()
+                const bookings = await BookingModel.find({
+                    locationid: location._id,
+                    status: BookingStatus.BOOKED,
+                    starttime: {
+                        $lt: et
+                    },
+                    endtime: {
+                        $gt: st
+                    }
+                }).lean()
 
-            if (bookings.length < location.numberofspots) {
-                return { ...location, ...{bookedspots: bookings.length}}
-            } else 
-            return { ...location, ...{bookedspots: bookings.length, status: ParkingLocationStatus.FULL}}
-        }))
+                if (bookings.length < location.numberofspots) {
+                    return { ...location, ...{ bookedspots: bookings.length } }
+                } else
+                    return { ...location, ...{ bookedspots: bookings.length, status: ParkingLocationStatus.FULL } }
+            }))
 
         return JSON.parse(JSON.stringify(availableLocations))
 
-    } catch(error) {
+    } catch (error) {
         console.log(error)
         throw error
     }
@@ -133,6 +136,21 @@ export async function getParkingLocation(
     }
 }
 
+export async function getParkingLocations() {
+    try {
+
+        connectToDB()
+
+        const location = await ParkingLocationModel.find<ParkingLocation>({})
+
+        return JSON.parse(JSON.stringify(location))
+
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
 export async function sendConfirmationEmail(bookingid: string): Promise<ActionResponse> {
 
     try {
@@ -142,7 +160,7 @@ export async function sendConfirmationEmail(bookingid: string): Promise<ActionRe
         if (!user) {
             throw new Error('You must be logged in')
         }
-        
+
         await connectToDB()
 
         const booking = await BookingModel.findById<Booking>(bookingid).populate({
@@ -160,7 +178,7 @@ export async function sendConfirmationEmail(bookingid: string): Promise<ActionRe
                     arrivingOn: formatDate(booking.starttime, 'hh:mm a'),
                     leavingOn: formatDate(booking.endtime, 'hh:mm a'),
                     plateNo: booking.plate,
-                    address: ((booking?.locationid as any) as ParkingLocation).address 
+                    address: ((booking?.locationid as any) as ParkingLocation).address
                 })
             })
 
@@ -191,7 +209,44 @@ export async function sendConfirmationEmail(bookingid: string): Promise<ActionRe
     }
 }
 
-export async function cancelBooking({bookingid, path}: {
+export async function sendViolationEmail(plate: string, address: string, timestamp: string): Promise<ActionResponse> {
+
+    try {
+
+        const { data, error } = await resend.emails.send({
+            from: "Gateless Parking <violation@grepsoft.com>",
+            to: process.env.VIOLATION_EMAIL!,
+            subject: "Violation reported",
+            react: ViolationEmailTemplate({
+                plate: plate,
+                address: address,
+                timestamp: timestamp
+            })
+        })
+
+        if (error) {
+            console.log(error)
+            return {
+                code: 1,
+                message: 'Failed to send email',
+                error: error
+            }
+        }
+
+        return {
+            code: 0,
+            message: 'Email sent',
+            error: error
+        }
+
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
+
+export async function cancelBooking({ bookingid, path }: {
     bookingid: string, path: string
 }) {
 
@@ -209,20 +264,20 @@ export async function cancelBooking({bookingid, path}: {
                 message: 'Booking not found'
             }
         }
-        
+
         revalidatePath(path)
         return {
             code: 0,
             message: 'Booking cancelled'
         }
-    } catch(error) {
+    } catch (error) {
         console.log(error)
         throw error
     }
 }
 
 export async function updateBooking(selfid: string, date: Date, starttime: string, endtime: string, path: string) {
-     
+
     try {
         await connectToDB()
 
@@ -236,8 +291,8 @@ export async function updateBooking(selfid: string, date: Date, starttime: strin
             throw new Error('Booking not found')
         }
 
-        const parkingLocation = 
-        await ParkingLocationModel.findById(originalBooking.locationid).lean() as ParkingLocation
+        const parkingLocation =
+            await ParkingLocationModel.findById(originalBooking.locationid).lean() as ParkingLocation
 
         const originalStarttime = originalBooking.starttime
         const originalEndtime = originalBooking.endtime
@@ -245,14 +300,14 @@ export async function updateBooking(selfid: string, date: Date, starttime: strin
 
         // check for collisions with existing booking
         if (compareAsc(st, originalStarttime) !== 0 && compareAsc(et, originalEndtime) !== 0) {
-            condition['starttime'] = {$lt: et}
-            condition['endtime'] = {$gt: st}   
+            condition['starttime'] = { $lt: et }
+            condition['endtime'] = { $gt: st }
         } else if (compareAsc(st, originalStarttime) !== 0) {
-            condition['starttime'] = {$lte: st}
-            condition['endtime'] = {$gt: st}
+            condition['starttime'] = { $lte: st }
+            condition['endtime'] = { $gt: st }
         } else if (compareAsc(et, originalEndtime) !== 0) {
-            condition['starttime'] = {$lt: et}
-            condition['endtime'] = {$gte: et}
+            condition['starttime'] = { $lt: et }
+            condition['endtime'] = { $gte: et }
         }
 
         const bookings = await BookingModel.find({
@@ -282,8 +337,50 @@ export async function updateBooking(selfid: string, date: Date, starttime: strin
             code: 1,
             message: 'Failed to update booking'
         }
-    } catch(error) {
+    } catch (error) {
         console.log(error)
+        throw error
+    }
+}
+
+export async function getBookings(date: Date,
+    locationid: string, status: BookingStatus) {
+
+    try {
+
+        const bookings = await BookingModel.find({
+            status: status || BookingStatus.BOOKED,
+            locationid: locationid,
+            $expr: {
+                $eq: [{
+                    $dateToString: {
+                        format: '%Y-%m-%d', date: '$bookingdate'
+                    }
+                }, format(date, 'yyyy-MM-dd')]
+            }
+        }).populate({
+            path: 'locationid', model: ParkingLocationModel
+        }).lean()
+
+        return {
+            code: 0,
+            message: '',
+            data: JSON.parse(JSON.stringify(bookings))
+        }
+    } catch (error) {
+        throw error
+    }
+
+}
+
+export async function deleteBooking(bookingid: string) {
+
+    try {
+        connectToDB()
+
+        const booking = await BookingModel.findByIdAndDelete(bookingid)
+
+    } catch (error) {
         throw error
     }
 }

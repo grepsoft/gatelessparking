@@ -1,5 +1,7 @@
+import { Booking } from "@/schemas/booking"
 import { Library } from "@googlemaps/js-api-loader"
 import { type ClassValue, clsx } from "clsx"
+import { compareAsc, differenceInMinutes, getHours, getMinutes } from "date-fns"
 import { twMerge } from "tailwind-merge"
 
 export const libs: Library[] = ['core', 'maps', 'places', 'marker']
@@ -145,4 +147,18 @@ export function getTimeSlots(startTime = "00:00", endTime="23:45"): ReturnType[]
   }
 
   return timeArray
+}
+
+export function sortcomparer(b1: Booking, b2: Booking) {
+  return compareAsc(b1.starttime, b2.starttime)
+}
+
+export function blockLength(starttime: Date, endtime: Date) {
+  return differenceInMinutes(endtime, starttime)
+}
+
+export function blockPostion(starttime: Date) {
+  const h = getHours(starttime)
+  const m = getMinutes(starttime)
+  return (h * 60) + m
 }

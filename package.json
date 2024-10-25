@@ -22,6 +22,7 @@
     "@radix-ui/react-separator": "^1.1.0",
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-switch": "^1.1.0",
+    "@radix-ui/react-tabs": "^1.1.1",
     "@react-email/components": "^0.0.25",
     "@react-google-maps/api": "^2.19.3",
     "@stripe/react-stripe-js": "^2.8.0",

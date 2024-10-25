@@ -33,7 +33,7 @@ export async function createCheckoutSession(data: FormData): Promise<void> {
         endtime: new Date(`${bookingdate}T${endtime}`),
         amount: Number(data.get('amount')),
         timeoffset: now.getTimezoneOffset(),
-        plate: data.get('plate'),
+        plate: (data.get('plate') as string).replaceAll(' ', ''),
         userid: user?.id
     })
 
